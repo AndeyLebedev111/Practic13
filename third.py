@@ -1,9 +1,18 @@
 import sqlite3
 
-connection = sqlite3.connect('my_database.db')
-cursor = connection.cursor()
+conn = sqlite3.connect("students.db")
+cursor = conn.cursor()
 
-cursor.execute('DELETE FROM Users WHERE username = ?', ('newuser',))
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS students (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT,
+    group_name TEXT
+)
+""")
 
-connection.commit()
-connection.close()
+cursor.execute("INSERT INTO students (name, group_name) VALUES (?, ?)", ("Иван", "111"))
+cursor.execute("INSERT INTO students (name, group_name) VALUES (?, ?)", ("Катя", "112"))
+
+conn.commit()
+conn.close()
