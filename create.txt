@@ -1,0 +1,46 @@
+-- Клиенты определение
+
+CREATE TABLE Клиенты (
+	id_klient INTEGER,
+	FIO TEXT(150),
+	phone INTEGER,
+	email TEXT DEFAULT ('40'),
+	CONSTRAINT Клиенты_PK PRIMARY KEY (id_klient)
+);
+
+
+-- Обувь определение
+
+CREATE TABLE Обувь (
+	id_shoes INTEGER,
+	name TEXT(50),
+	material TEXT(50),
+	colour TEXT(50),
+	"size" INTEGER,
+	price REAL,
+	CONSTRAINT Обувь_PK PRIMARY KEY (id_shoes)
+);
+
+
+-- Заказы определение
+
+CREATE TABLE Заказы (
+	id_zakaza INTEGER,
+	id_klienta INTEGER,
+	data_zakaza TEXT(12),
+	CONSTRAINT Заказы_PK PRIMARY KEY (id_zakaza),
+	CONSTRAINT Заказы_Клиенты_FK FOREIGN KEY (id_klienta) REFERENCES Клиенты(id_klient) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+
+-- "Соcтав заказов" определение
+
+CREATE TABLE "Соcтав заказов" (
+	id_sostava_zakaza INTEGER,
+	id_zakaza INTEGER,
+	id_shoes INTEGER,
+	kolichestvo INTEGER,
+	CONSTRAINT Сотав_заказов_PK PRIMARY KEY (id_sostava_zakaza),
+	CONSTRAINT Соcтав_заказов_Заказы_FK FOREIGN KEY (id_zakaza) REFERENCES Заказы(id_zakaza) ON DELETE CASCADE ON UPDATE CASCADE,
+	CONSTRAINT Соcтав_заказов_Обувь_FK FOREIGN KEY (id_shoes) REFERENCES Обувь(id_shoes) ON DELETE CASCADE ON UPDATE CASCADE
+);
