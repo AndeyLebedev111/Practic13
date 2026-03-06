@@ -13,10 +13,42 @@ import sqlite3
 import sys
 
 
+class DynamicDialog(QtWidgets.QDialog):
+
+    def __init__(self, columns, values=None, parent=None):
+        super().__init__(parent)
+
+        self.setWindowTitle("Редактирование данных")
+        self.layout = QtWidgets.QFormLayout(self)
+        self.line_edits = []
+
+        for i, col in enumerate(columns):
+            le = QtWidgets.QLineEdit(self)
+            if values:
+                le.setText(str(values[i]))
+            self.layout.addRow(col, le)
+            self.line_edits.append(le)
+
+        self.buttons = QtWidgets.QDialogButtonBox(
+            QtWidgets.QDialogButtonBox.Ok |
+            QtWidgets.QDialogButtonBox.Cancel
+        )
+
+        self.buttons.accepted.connect(self.accept)
+        self.buttons.rejected.connect(self.reject)
+
+        self.layout.addWidget(self.buttons)
+
+    def get_data(self):
+        return [le.text() for le in self.line_edits]
+
+
 class Ui_MainWindow(object):
+
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(1110, 867)
+
         self.centralwidget = QtWidgets.QWidget(MainWindow)
 
         self.label = QtWidgets.QLabel(self.centralwidget)
@@ -24,17 +56,18 @@ class Ui_MainWindow(object):
         font = QtGui.QFont()
         font.setPointSize(16)
         self.label.setFont(font)
-        self.label.setText("Поиск")
 
         self.lineEdit = QtWidgets.QLineEdit(self.centralwidget)
         self.lineEdit.setGeometry(QtCore.QRect(130, 20, 421, 31))
+        font = QtGui.QFont()
+        font.setPointSize(14)
+        self.lineEdit.setFont(font)
 
         self.label_2 = QtWidgets.QLabel(self.centralwidget)
         self.label_2.setGeometry(QtCore.QRect(590, 10, 161, 41))
         font = QtGui.QFont()
         font.setPointSize(16)
         self.label_2.setFont(font)
-        self.label_2.setText("Сортировка")
 
         self.comboBox = QtWidgets.QComboBox(self.centralwidget)
         self.comboBox.setGeometry(QtCore.QRect(750, 20, 121, 31))
@@ -44,33 +77,46 @@ class Ui_MainWindow(object):
         font = QtGui.QFont()
         font.setPointSize(16)
         self.label_3.setFont(font)
-        self.label_3.setText("Таблицы")
 
         self.comboBox_2 = QtWidgets.QComboBox(self.centralwidget)
         self.comboBox_2.setGeometry(QtCore.QRect(930, 70, 161, 31))
 
         self.pushButton = QtWidgets.QPushButton(self.centralwidget)
         self.pushButton.setGeometry(QtCore.QRect(930, 140, 141, 51))
-        self.pushButton.setText("Добавить")
 
         self.pushButton_2 = QtWidgets.QPushButton(self.centralwidget)
         self.pushButton_2.setGeometry(QtCore.QRect(930, 240, 141, 51))
-        self.pushButton_2.setText("Изменить")
 
         self.pushButton_3 = QtWidgets.QPushButton(self.centralwidget)
         self.pushButton_3.setGeometry(QtCore.QRect(930, 340, 141, 51))
-        self.pushButton_3.setText("Удалить")
 
         self.tableWidget = QtWidgets.QTableWidget(self.centralwidget)
         self.tableWidget.setGeometry(QtCore.QRect(20, 60, 891, 741))
 
         MainWindow.setCentralWidget(self.centralwidget)
 
+        self.menubar = QtWidgets.QMenuBar(MainWindow)
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 1110, 26))
+        MainWindow.setMenuBar(self.menubar)
+
+        self.statusbar = QtWidgets.QStatusBar(MainWindow)
+        MainWindow.setStatusBar(self.statusbar)
+
         self.retranslateUi(MainWindow)
+
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
-        MainWindow.setWindowTitle("Работа с БД")
+        _translate = QtCore.QCoreApplication.translate
+
+        MainWindow.setWindowTitle(_translate("MainWindow", "Работа с БД"))
+        self.label.setText(_translate("MainWindow", "Поиск"))
+        self.label_2.setText(_translate("MainWindow", "Сортировка"))
+        self.label_3.setText(_translate("MainWindow", "Таблицы"))
+
+        self.pushButton.setText(_translate("MainWindow", "Добавить"))
+        self.pushButton_2.setText(_translate("MainWindow", "Изменить"))
+        self.pushButton_3.setText(_translate("MainWindow", "Удалить"))
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -83,43 +129,112 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.conn = sqlite3.connect("individ.db")
         self.cursor = self.conn.cursor()
+
+        self.columns = []
+        self.current_table = ""
+
         self.load_tables()
+
         self.ui.comboBox_2.currentTextChanged.connect(self.load_table)
 
-    def load_tables(self):
+        self.ui.pushButton.clicked.connect(self.addRow)
+        self.ui.pushButton_2.clicked.connect(self.editRow)
+        self.ui.pushButton_3.clicked.connect(self.deleteRow)
 
+    def load_tables(self):
         self.cursor.execute(
-            "SELECT name FROM sqlite_master WHERE type='table';"
+            "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%';"
         )
 
         tables = self.cursor.fetchall()
-
         self.ui.comboBox_2.clear()
 
         for table in tables:
             self.ui.comboBox_2.addItem(table[0])
 
     def load_table(self, table_name):
-
         if table_name == "":
             return
 
+        self.current_table = table_name
+
         query = f'SELECT * FROM "{table_name}"'
         self.cursor.execute(query)
-
         data = self.cursor.fetchall()
-        columns = [desc[0] for desc in self.cursor.description]
+        
+        self.columns = [desc[0] for desc in self.cursor.description]
 
-        self.ui.tableWidget.setColumnCount(len(columns))
+        self.ui.tableWidget.setColumnCount(len(self.columns))
         self.ui.tableWidget.setRowCount(len(data))
+        self.ui.tableWidget.setHorizontalHeaderLabels(self.columns)
 
-        self.ui.tableWidget.setHorizontalHeaderLabels(columns)
-
-        for row_index, row in enumerate(data):
-            for col_index, value in enumerate(row):
-
+        for row_index, row_data in enumerate(data):
+            for col_index, value in enumerate(row_data):
                 item = QtWidgets.QTableWidgetItem(str(value))
+                item.setFlags(item.flags() ^ QtCore.Qt.ItemIsEditable)
                 self.ui.tableWidget.setItem(row_index, col_index, item)
+
+    def addRow(self):
+        dialog = DynamicDialog(self.columns)
+
+        if dialog.exec():
+            values = dialog.get_data()
+            placeholders = ",".join("?" * len(values))
+
+            query = f'INSERT INTO "{self.current_table}" VALUES ({placeholders})'
+            self.cursor.execute(query, values)
+
+            self.conn.commit()
+            self.load_table(self.current_table)
+
+    def editRow(self):
+        selected = self.ui.tableWidget.selectedItems()
+
+        if not selected:
+            QtWidgets.QMessageBox.warning(self, "Ошибка", "Выберите строку")
+            return
+
+        row = selected[0].row()
+
+        values = [
+            self.ui.tableWidget.item(row, col).text()
+            for col in range(self.ui.tableWidget.columnCount())
+        ]
+        dialog = DynamicDialog(self.columns, values)
+
+        if dialog.exec():
+            new_values = dialog.get_data()
+            set_clause = ", ".join([f"{col}=?" for col in self.columns])
+            row_id = values[0]
+            query = f'UPDATE "{self.current_table}" SET {set_clause} WHERE {self.columns[0]}=?'
+            new_values.append(row_id)
+            self.cursor.execute(query, new_values)
+            self.conn.commit()
+            self.load_table(self.current_table)
+
+    def deleteRow(self):
+        selected = self.ui.tableWidget.selectedItems()
+
+        if not selected:
+            QtWidgets.QMessageBox.warning(self, "Ошибка", "Выберите строку")
+            return
+
+        row = selected[0].row()
+        row_id = self.ui.tableWidget.item(row, 0).text()
+        
+        reply = QtWidgets.QMessageBox.question(
+            self,
+            "Удаление",
+            f"Удалить запись ID = {row_id}?",
+            QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No
+        )
+
+        if reply == QtWidgets.QMessageBox.Yes:
+            query = f'DELETE FROM "{self.current_table}" WHERE {self.columns[0]}=?'
+
+            self.cursor.execute(query, (row_id,))
+            self.conn.commit()
+            self.load_table(self.current_table)
 
 
 if __name__ == "__main__":
