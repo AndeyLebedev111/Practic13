@@ -9,6 +9,11 @@
 
 
 from PyQt5 import QtCore, QtGui, QtWidgets
+import sys
+from individ_main import Ui_MainWindow as Ui_MainWindow_2
+
+LOGIN = "admin"
+PASSWORD = "12345"
 
 
 class Ui_MainWindow(object):
@@ -17,6 +22,7 @@ class Ui_MainWindow(object):
         MainWindow.resize(541, 400)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
+
         self.lineEdit = QtWidgets.QLineEdit(self.centralwidget)
         self.lineEdit.setGeometry(QtCore.QRect(180, 100, 211, 41))
         font = QtGui.QFont()
@@ -24,24 +30,28 @@ class Ui_MainWindow(object):
         self.lineEdit.setFont(font)
         self.lineEdit.setStyleSheet("border-color: rgb(0, 255, 0);")
         self.lineEdit.setObjectName("lineEdit")
+
         self.label = QtWidgets.QLabel(self.centralwidget)
         self.label.setGeometry(QtCore.QRect(160, 30, 251, 41))
         font = QtGui.QFont()
         font.setPointSize(16)
         self.label.setFont(font)
         self.label.setObjectName("label")
+
         self.label_2 = QtWidgets.QLabel(self.centralwidget)
         self.label_2.setGeometry(QtCore.QRect(60, 100, 91, 41))
         font = QtGui.QFont()
         font.setPointSize(16)
         self.label_2.setFont(font)
         self.label_2.setObjectName("label_2")
+
         self.label_3 = QtWidgets.QLabel(self.centralwidget)
         self.label_3.setGeometry(QtCore.QRect(50, 220, 91, 41))
         font = QtGui.QFont()
         font.setPointSize(16)
         self.label_3.setFont(font)
         self.label_3.setObjectName("label_3")
+
         self.lineEdit_2 = QtWidgets.QLineEdit(self.centralwidget)
         self.lineEdit_2.setGeometry(QtCore.QRect(180, 220, 211, 41))
         font = QtGui.QFont()
@@ -49,6 +59,7 @@ class Ui_MainWindow(object):
         self.lineEdit_2.setFont(font)
         self.lineEdit_2.setStyleSheet("border-color: rgb(0, 255, 0);")
         self.lineEdit_2.setObjectName("lineEdit_2")
+
         self.pushButton = QtWidgets.QPushButton(self.centralwidget)
         self.pushButton.setGeometry(QtCore.QRect(220, 290, 121, 41))
         font = QtGui.QFont()
@@ -56,11 +67,14 @@ class Ui_MainWindow(object):
         self.pushButton.setFont(font)
         self.pushButton.setStyleSheet("border-color: rgb(255, 255, 255);")
         self.pushButton.setObjectName("pushButton")
+
         MainWindow.setCentralWidget(self.centralwidget)
+
         self.menubar = QtWidgets.QMenuBar(MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 541, 26))
         self.menubar.setObjectName("menubar")
         MainWindow.setMenuBar(self.menubar)
+
         self.statusbar = QtWidgets.QStatusBar(MainWindow)
         self.statusbar.setObjectName("statusbar")
         MainWindow.setStatusBar(self.statusbar)
@@ -77,11 +91,39 @@ class Ui_MainWindow(object):
         self.pushButton.setText(_translate("MainWindow", "Войти"))
 
 
+class LoginWindow(QtWidgets.QMainWindow):
+
+    def __init__(self):
+        super().__init__()
+
+        self.ui = Ui_MainWindow()
+        self.ui.setupUi(self)
+
+        self.ui.lineEdit_2.setEchoMode(QtWidgets.QLineEdit.Password)
+        self.ui.pushButton.clicked.connect(self.check_login)
+
+    def check_login(self):
+
+        login = self.ui.lineEdit.text()
+        password = self.ui.lineEdit_2.text()
+
+        if login == LOGIN and password == PASSWORD:
+            self.open_main()
+        else:
+            QtWidgets.QMessageBox.warning(self, "Ошибка", "Неверный логин или пароль")
+
+    def open_main(self):
+
+        self.main_window = QtWidgets.QMainWindow()
+        self.ui_main = Ui_MainWindow_2()
+        self.ui_main.setupUi(self.main_window)
+
+        self.main_window.show()
+        self.close()
+
+
 if __name__ == "__main__":
-    import sys
     app = QtWidgets.QApplication(sys.argv)
-    MainWindow = QtWidgets.QMainWindow()
-    ui = Ui_MainWindow()
-    ui.setupUi(MainWindow)
-    MainWindow.show()
+    window = LoginWindow()
+    window.show()
     sys.exit(app.exec_())

@@ -9,6 +9,8 @@
 
 
 from PyQt5 import QtCore, QtGui, QtWidgets
+import sqlite3
+import sys
 
 
 class Ui_MainWindow(object):
@@ -16,102 +18,112 @@ class Ui_MainWindow(object):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(1110, 867)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
-        self.centralwidget.setObjectName("centralwidget")
+
         self.label = QtWidgets.QLabel(self.centralwidget)
         self.label.setGeometry(QtCore.QRect(20, 10, 121, 41))
         font = QtGui.QFont()
         font.setPointSize(16)
         self.label.setFont(font)
-        self.label.setObjectName("label")
+        self.label.setText("Поиск")
+
         self.lineEdit = QtWidgets.QLineEdit(self.centralwidget)
         self.lineEdit.setGeometry(QtCore.QRect(130, 20, 421, 31))
-        font = QtGui.QFont()
-        font.setPointSize(14)
-        self.lineEdit.setFont(font)
-        self.lineEdit.setStyleSheet("border-color: rgb(0, 255, 0);")
-        self.lineEdit.setObjectName("lineEdit")
+
         self.label_2 = QtWidgets.QLabel(self.centralwidget)
         self.label_2.setGeometry(QtCore.QRect(590, 10, 161, 41))
         font = QtGui.QFont()
         font.setPointSize(16)
         self.label_2.setFont(font)
-        self.label_2.setObjectName("label_2")
+        self.label_2.setText("Сортировка")
+
         self.comboBox = QtWidgets.QComboBox(self.centralwidget)
         self.comboBox.setGeometry(QtCore.QRect(750, 20, 121, 31))
-        font = QtGui.QFont()
-        font.setPointSize(14)
-        self.comboBox.setFont(font)
-        self.comboBox.setStyleSheet("border-color: rgb(0, 255, 0);")
-        self.comboBox.setObjectName("comboBox")
+
         self.label_3 = QtWidgets.QLabel(self.centralwidget)
         self.label_3.setGeometry(QtCore.QRect(930, 10, 121, 41))
         font = QtGui.QFont()
         font.setPointSize(16)
         self.label_3.setFont(font)
-        self.label_3.setObjectName("label_3")
+        self.label_3.setText("Таблицы")
+
         self.comboBox_2 = QtWidgets.QComboBox(self.centralwidget)
         self.comboBox_2.setGeometry(QtCore.QRect(930, 70, 161, 31))
-        font = QtGui.QFont()
-        font.setPointSize(14)
-        self.comboBox_2.setFont(font)
-        self.comboBox_2.setStyleSheet("border-color: rgb(0, 255, 0);")
-        self.comboBox_2.setObjectName("comboBox_2")
+
         self.pushButton = QtWidgets.QPushButton(self.centralwidget)
         self.pushButton.setGeometry(QtCore.QRect(930, 140, 141, 51))
-        font = QtGui.QFont()
-        font.setPointSize(16)
-        self.pushButton.setFont(font)
-        self.pushButton.setObjectName("pushButton")
+        self.pushButton.setText("Добавить")
+
         self.pushButton_2 = QtWidgets.QPushButton(self.centralwidget)
         self.pushButton_2.setGeometry(QtCore.QRect(930, 240, 141, 51))
-        font = QtGui.QFont()
-        font.setPointSize(16)
-        self.pushButton_2.setFont(font)
-        self.pushButton_2.setStyleSheet("border-color: rgb(0, 255, 0);")
-        self.pushButton_2.setObjectName("pushButton_2")
+        self.pushButton_2.setText("Изменить")
+
         self.pushButton_3 = QtWidgets.QPushButton(self.centralwidget)
         self.pushButton_3.setGeometry(QtCore.QRect(930, 340, 141, 51))
-        font = QtGui.QFont()
-        font.setPointSize(16)
-        self.pushButton_3.setFont(font)
-        self.pushButton_3.setStyleSheet("border-color: rgb(0, 255, 0);")
-        self.pushButton_3.setObjectName("pushButton_3")
+        self.pushButton_3.setText("Удалить")
+
         self.tableWidget = QtWidgets.QTableWidget(self.centralwidget)
         self.tableWidget.setGeometry(QtCore.QRect(20, 60, 891, 741))
-        self.tableWidget.setStyleSheet("border-color: rgb(0, 255, 0);\n"
-"gridline-color: rgb(0, 255, 0);\n"
-"selection-color: rgb(0, 255, 0);")
-        self.tableWidget.setObjectName("tableWidget")
-        self.tableWidget.setColumnCount(0)
-        self.tableWidget.setRowCount(0)
+
         MainWindow.setCentralWidget(self.centralwidget)
-        self.menubar = QtWidgets.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 1110, 26))
-        self.menubar.setObjectName("menubar")
-        MainWindow.setMenuBar(self.menubar)
-        self.statusbar = QtWidgets.QStatusBar(MainWindow)
-        self.statusbar.setObjectName("statusbar")
-        MainWindow.setStatusBar(self.statusbar)
 
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
-        _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "Работа с БД"))
-        self.label.setText(_translate("MainWindow", "Поиск"))
-        self.label_2.setText(_translate("MainWindow", "Сортировка"))
-        self.label_3.setText(_translate("MainWindow", "Таблицы"))
-        self.pushButton.setText(_translate("MainWindow", "Добавить"))
-        self.pushButton_2.setText(_translate("MainWindow", "Изменить"))
-        self.pushButton_3.setText(_translate("MainWindow", "Удалить"))
+        MainWindow.setWindowTitle("Работа с БД")
+
+
+class MainWindow(QtWidgets.QMainWindow):
+
+    def __init__(self):
+        super().__init__()
+
+        self.ui = Ui_MainWindow()
+        self.ui.setupUi(self)
+
+        self.conn = sqlite3.connect("individ.db")
+        self.cursor = self.conn.cursor()
+        self.load_tables()
+        self.ui.comboBox_2.currentTextChanged.connect(self.load_table)
+
+    def load_tables(self):
+
+        self.cursor.execute(
+            "SELECT name FROM sqlite_master WHERE type='table';"
+        )
+
+        tables = self.cursor.fetchall()
+
+        self.ui.comboBox_2.clear()
+
+        for table in tables:
+            self.ui.comboBox_2.addItem(table[0])
+
+    def load_table(self, table_name):
+
+        if table_name == "":
+            return
+
+        query = f'SELECT * FROM "{table_name}"'
+        self.cursor.execute(query)
+
+        data = self.cursor.fetchall()
+        columns = [desc[0] for desc in self.cursor.description]
+
+        self.ui.tableWidget.setColumnCount(len(columns))
+        self.ui.tableWidget.setRowCount(len(data))
+
+        self.ui.tableWidget.setHorizontalHeaderLabels(columns)
+
+        for row_index, row in enumerate(data):
+            for col_index, value in enumerate(row):
+
+                item = QtWidgets.QTableWidgetItem(str(value))
+                self.ui.tableWidget.setItem(row_index, col_index, item)
 
 
 if __name__ == "__main__":
-    import sys
     app = QtWidgets.QApplication(sys.argv)
-    MainWindow = QtWidgets.QMainWindow()
-    ui = Ui_MainWindow()
-    ui.setupUi(MainWindow)
-    MainWindow.show()
+    window = MainWindow()
+    window.show()
     sys.exit(app.exec_())
